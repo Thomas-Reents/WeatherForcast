@@ -1,0 +1,128 @@
+﻿@page "/fetchdata"
+@inject HttpClient Http
+
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching forcast data from <a href="https://weatherdbi.herokuapp.com/data/weather/">https://weatherdbi.herokuapp.com/data/weather/</a>.</p>
+
+<h4 style="padding-top: 10px;">Enter City</h4>
+<input type="text" @bind="@City" />
+<button @onclick="GetWeatherForcast">Search</button>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    var today = DateTime.Today;
+    <h2>@forecasts.Region</h2>
+    <h4>Today: @today.ToShortDateString()</h4>
+    <p>Wind: @forecasts.CurrentConditions.Wind.mile.ToString()mph</p>
+    <p>Temp: @forecasts.CurrentConditions.Temp.F.ToString() °F</p>
+    <p>Percipitation: @forecasts.CurrentConditions.Precip</p>
+    <p>Humidity: @forecasts.CurrentConditions.Humidity</p>
+    <p>Condition: @forecasts.CurrentConditions.Comment</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>High</th>
+                <th>Low</th>
+                <th>Condition</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var forecast in forecasts.Next_days)
+            {
+                <tr>
+                    <td>@forecast.Day</td>
+                    <td>@forecast.Max_temp.F °F</td>
+                    <td>@forecast.Min_temp.F °F</td>
+                    <td>@forecast.Comment</td>
+                    <td><img src="@forecast.IconURL" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private WeatherForecast? forecasts;
+
+    private string City = "Austin";
+
+    // OnInitializedAsync() called before UI is initialized. 
+    protected override async Task OnInitializedAsync()
+    {
+        //loads data from json file
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast>(City);
+    }
+
+    protected async Task GetWeatherForcast()
+    {
+        forecasts = null;
+
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast>(City);
+    }
+
+    public class WeatherForecast : NextDays
+    {
+        public string? Region { get; set; }
+
+        public CurrentConditions? CurrentConditions { get; set; }
+
+        public NextDays[]? Next_days { get; set; }
+    
+
+    }
+
+    public class CurrentConditions 
+    {
+        public string? DayHour { get; set; }
+
+        public Temp? Temp { get; set; }
+
+        public string? Precip { get; set; }
+
+        public string? Humidity { get; set; }
+
+        public Wind? Wind { get; set; }
+
+        public string? IconURL { get; set; }
+
+        public string? Comment { get; set; }
+    }
+
+    public class Wind 
+    {
+        public int? km { get; set; }
+
+        public int? mile { get; set; }
+    }
+
+    public class Temp
+    {
+        public int? C { get; set; }
+
+        public int? F { get; set; }
+    }
+
+    public class NextDays
+    {
+        public string? Day { get; set; }
+
+        public string? Comment { get; set; }
+
+        public Temp? Max_temp { get; set; }
+
+        public Temp? Min_temp { get; set; }
+
+        public string? IconURL { get; set; }
+    }
+
+   
+}
